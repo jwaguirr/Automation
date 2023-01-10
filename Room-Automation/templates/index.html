@@ -1,0 +1,18 @@
+<html>
+    <body>
+        <form action = "{{ url_for('index') }}" method = "POST">
+            <h3>Times <a href = "/database">Database</a></h3>
+            Prioritized<br>
+            <select type = "text" name = "prioritized">
+                <option value = "None">None</option>
+                <option value = "custom-input">Custom</option>
+            </select>    
+            <br>
+            Weekdays<br>
+            <input type = "text" name = "weekdays" /><br>
+            Weekends<br>
+            <input type = "text" name = "weekends" /><br>
+            <input type = "submit" value = "submit" /><br>   
+        </form>
+    </body>
+</html>

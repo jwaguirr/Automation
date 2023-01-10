@@ -1,0 +1,8 @@
+<a href = "/"><h1>Set a different alarm?</h1></a>
+{% for item in data %}
+<tr>
+    <td>Prioritized Time: {{item[0]}}</td><br>
+    <td>Weekdays: {{item[1]}}</td><br>
+    <td>Weekends: {{item[2]}}</td>
+</tr>
+{%endfor%}
