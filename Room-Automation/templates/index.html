@@ -1,18 +1,83 @@
 <html>
+    <head>
+        <title>JWS Room</title>
+        <style>
+            body{
+                background-color: #5f787b;
+            }
+            a{
+                text-decoration: none;
+                color: black;
+                border: 2px solid black;
+                border-radius: 5px;
+                padding:.25rem;
+            }
+            a:hover{
+                opacity: 50%;
+            }
+            .nav{
+                margin:auto;
+                width:50%;
+                margin-top: 10%;
+                text-align: center;
+            }
+            .form{
+                margin:0;
+                position: absolute;
+                top:55%;
+                left:50%;
+                transform: translate(-50%, -50%);
+            }
+            .form h5{
+                padding: 0;
+                margin: 0;
+            }
+            .form input{
+                border-radius: 5px;
+                margin-bottom:20px;
+                background-color: transparent;
+                box-shadow: none;
+                border-color: transparent;
+            }
+            .form span{
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            .form span input::placeholder{
+                color:darkgray;
+                opacity:50%;
+            }
+            .button{
+                display:flex; 
+                justify-content:center;
+            }
+            .button:hover{
+                opacity: 50%;
+            }
+        </style>
+    </head>
     <body>
-        <form action = "{{ url_for('index') }}" method = "POST">
-            <h3>Times <a href = "/database">Database</a></h3>
-            Prioritized<br>
-            <select type = "text" name = "prioritized">
-                <option value = "None">None</option>
-                <option value = "custom-input">Custom</option>
-            </select>    
-            <br>
-            Weekdays<br>
-            <input type = "text" name = "weekdays" /><br>
-            Weekends<br>
-            <input type = "text" name = "weekends" /><br>
-            <input type = "submit" value = "submit" /><br>   
+        {% for item in data %}
+        <form action = "{{ url_for('index') }}" method = "POST" name = "timeForm" onchange="showDropInfo()">
+            <div class = "nav">
+                <h1>Alarm Times</h1>
+                <h3>Please enter in 24 Hour format</h3>
+                <a href = "/database" type = "button">Database</a>
+            </div>
+            <div class = "form">
+                <h5>Prioritized</h5><br>
+                <span><input type="text" name = "prioritized" list="times" value = "None" /></span>
+                <datalist id="times" value = "None">
+                    <option>None</option>
+                </datalist>  
+                <br>
+                <h5>Weekday Mornings</h5><br>
+                <span><input type = "text" name = "weekdays" placeholder={{item[1]}} /></span><br>
+                <h5>Weekend Mornings</h5><br>
+                <span><input type = "text" name = "weekends" placeholder = {{item[2]}} /></span><br>
+                <span class = "button"><input type = "submit" value = "Update Alarms" /></span><br>
+            </div>
         </form>
+        {%endfor%}
     </body>
 </html>
