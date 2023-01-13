@@ -1,4 +1,5 @@
 <html>
+    {% for item in data %}
     <head>
         <title>JWS Room</title>
         <style>
@@ -21,13 +22,7 @@
                 margin-top: 10%;
                 text-align: center;
             }
-            .form{
-                margin:0;
-                position: absolute;
-                top:55%;
-                left:50%;
-                transform: translate(-50%, -50%);
-            }
+            
             .form h5{
                 padding: 0;
                 margin: 0;
@@ -39,6 +34,24 @@
                 box-shadow: none;
                 border-color: transparent;
             }
+            .grid-container {
+                display: grid;
+                grid-template-columns: auto auto;
+            }
+            .grid-item{
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                padding:10px;
+                text-align: center;
+            }
+            .grid-item h5{
+                padding-bottom: 10px;
+
+            }
+            .grid-item span{
+                height: 1.5rem;
+            }
             .form span{
                 border: 2px solid black;
                 border-radius: 5px;
@@ -47,17 +60,30 @@
                 color:darkgray;
                 opacity:50%;
             }
-            .button{
-                display:flex; 
-                justify-content:center;
+            .priority{
+                margin: auto;
+                width:25%;
+                text-align: center;
+                padding-top:10%;
             }
             .button:hover{
                 opacity: 50%;
             }
+            .buttons{
+                margin:auto;
+                width: 20%;
+                text-align: center;
+                padding: 10px;
+            }
+            .buttons label {
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }
         </style>
+        <script>
+        </script>
     </head>
     <body>
-        {% for item in data %}
         <form action = "{{ url_for('index') }}" method = "POST" name = "timeForm" onchange="showDropInfo()">
             <div class = "nav">
                 <h1>Alarm Times</h1>
@@ -65,19 +91,50 @@
                 <a href = "/database" type = "button">Database</a>
             </div>
             <div class = "form">
-                <h5>Prioritized</h5><br>
-                <span><input type="text" name = "prioritized" list="times" value = "None" /></span>
-                <datalist id="times" value = "None">
-                    <option>None</option>
-                </datalist>  
-                <br>
-                <h5>Weekday Mornings</h5><br>
-                <span><input type = "text" name = "weekdays" placeholder={{item[1]}} /></span><br>
-                <h5>Weekend Mornings</h5><br>
-                <span><input type = "text" name = "weekends" placeholder = {{item[2]}} /></span><br>
-                <span class = "button"><input type = "submit" value = "Update Alarms" /></span><br>
+                <div class = "priority">
+                    <h5>Prioritized</h5><br>
+                    <span><input type="text" name = "prioritized" list="times" value = "None" /></span>
+                    <datalist id="times" value = "None">
+                        <option>None</option>
+                    </datalist> 
+                    <div>
+                        <input type = "radio" id="AM" value = "AM" name = "prioritizedTime"/>
+                        <label for="AM">AM</label>
+                        <input type = "radio" id = "PM" value = "PM" name = "prioritizedTime"/>
+                        <label for = "PM">PM</label>
+                    </div>
+                </div>
+                <div class = "grid-container">
+                    <div class = "grid-item">
+                        <h5>Weekday Mornings</h5>
+                        <span><input type = "text" name = "weekdays" placeholder={{item[1]}} /></span><br>
+                        <p style="margin: -10px; padding:0; font-size:.75rem;">Powers off after an hour</p>
+                    </div>
+                    <div class = "grid-item">
+                        <h5>Weekday Nights (Turn Off)</h5>
+                        <span><input type = "text" name = "weekdayNights" placeholder={{item[3]}} /></span><br>
+                        <p style="margin: -10px; padding:0; font-size:.75rem;">Powers on two hours before</p>
+                    </div>
+                    <div class="grid-item">
+                        <h5>Weekend Mornings</h5>
+                        <span><input type = "text" name = "weekends" placeholder = {{item[2]}} /></span><br>
+                        <p style="margin: -10px; padding:0; font-size:.75rem;">Powers off after an hour</p>
+                    </div>
+                    <div class="grid-item">
+                        <h5>Weekend Nights (Turn Off)</h5>
+                        <span><input type = "text" name = "weekendNights" placeholder = {{item[4]}} /></span><br>
+                        <p style="margin: -10px; padding:0; font-size:.75rem;">Powers on two hours before</p>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <label>{{alarm}}</label><br>
+                    <span class = "button"><input type = "submit" value = "Toggle" name = "toggleAlarms"/></span><br>
+                    <label>Update Alarms</label><br>
+                    <span class = "button"><input type = "submit" value = "Update Alarms" /></span><br>
+                </div>
+                
             </div>
         </form>
-        {%endfor%}
     </body>
+    {%endfor%}
 </html>
