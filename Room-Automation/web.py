@@ -5,11 +5,10 @@ import sqlite3 as sql
 import threading
 
 # To run the app flask --app web --debug run --port 5001
-
 app = Flask(__name__)
 conn = sql.connect("database.db", check_same_thread=False)
 c = conn.cursor()
-
+arr = [""]
 # Creates the Table if it doesnt exist
 c.execute("""CREATE TABLE IF NOT EXISTS times(
     prioritized text,
@@ -21,6 +20,7 @@ c.execute("""CREATE TABLE IF NOT EXISTS times(
 )
 """)
 
+# Formats the time to 24 Hours
 def formatTime(amPm, tableValName, userTimeInput):
     alarmTime = "{} {}".format(userTimeInput, amPm)
     inTime = datetime.strptime(alarmTime, "%I:%M %p")
@@ -112,8 +112,28 @@ def pullDifferences(prioritized, weekdays, weekends, weekdayNights, weekendNight
                 userTimeInput = weekendNights
                 formatTime(amPm, tableValName,userTimeInput)    
 
+def triggerPrioritizedFunc(prioritizedFromDB):
+    # Adding 12 Hours to the Time So it will disregard the morning alarm
+    prioritizedFromDB = prioritizedFromDB.split()
+    for x in prioritizedFromDB:
+        firstTwoDigits = (int(x[0] + x[1]))
+        secondTwoDigits = x[3] + x[4]
+    firstTwoDigits = firstTwoDigits + 12
+    if firstTwoDigits >= 24:
+        firstTwoDigits = firstTwoDigits - 24
+        if firstTwoDigits in range(0,10):
+            firstTwoDigits = "0{}".format(firstTwoDigits)
+    turnOffTime = "{}:{}:00".format(firstTwoDigits, secondTwoDigits)
+    arr.pop(0)
+    arr.insert(0,turnOffTime)
+    print(arr)
+    # Running The Actual Code-- Turning on LED Lights, Opening Blinds, Connecting to Speaker, and Possibly Moving Bed
 
+def morningFunc():
+    print("Currently running the morning code :)")
 
+def nightTimeFunc():
+    print("Currently running the nighttime code :)")
 
 # Setting the alarm when pulling from the DB
 def setAlarm():
@@ -126,33 +146,46 @@ def setAlarm():
     else:
         alarms = 1
     while alarms == 1:
-        #TODO add priority functionality
         c.execute("SELECT * FROM times")
         times = c.fetchall()
         for items in times:
             pass
-        prioritizedFromDB = "{}{}".format(items[0],":00"); weekdaysFromDB = "{}{}".format(items [1],":00"); weekendsFromDB = "{}{}".format(items[2],":00"); weekdayNightsFromDB = "{}{}".format(items[3],":00"); weekendNightsFromDB = "{}{}".format(items[4],":00"); toggleAlarmFromDB = items[5]
+        if items[0] != "None":
+             prioritizedFromDB = "{}{}".format(items[0],":00")
+        else:
+            prioritizedFromDB = items[0]
+        weekdaysFromDB = "{}{}".format(items [1],":00"); weekendsFromDB = "{}{}".format(items[2],":00"); weekdayNightsFromDB = "{}{}".format(items[3],":00"); weekendNightsFromDB = "{}{}".format(items[4],":00"); toggleAlarmFromDB = items[5]
         if toggleAlarmFromDB == 0:
             alarms = 0
         dayOfWeek = int((datetime.now().date()).strftime('%w'))
         itsAWeekend = dayOfWeek == 0 or dayOfWeek == 6
         now = datetime.now()
         currentTime = now.strftime("%H:%M:%S")
-        if itsAWeekend:
-            if currentTime == weekendsFromDB:
-                print("we did it weekend day time")
-            elif currentTime == weekendNightsFromDB:
-                print("We did it weekend night time")
-        else: # Not a weekend
-            if currentTime == weekdaysFromDB:
-                print("We did it weekday daytime")
-            elif currentTime == weekdayNightsFromDB:
-                print("We did it weekday nighttime!")
-        print(threading.active_count())
+        
+        if prioritizedFromDB != "None": # Prioritizing the Prioritized Time
+            if prioritizedFromDB == currentTime:
+                triggerPrioritizedFunc(prioritizedFromDB)
+                print(prioritizedFromDB)
+            elif prioritizedFromDB == arr[0]:
+                arr.insert(0,"")
+                c.execute('UPDATE times SET prioritized = "None"')
+                conn.commit()
+                pass
+        else:
+            if itsAWeekend:
+                if weekendsFromDB == currentTime:
+                    morningFunc()
+                elif weekendNightsFromDB == currentTime:
+                    nightTimeFunc()
+
+            else: # Not a weekend
+                if weekdaysFromDB == currentTime:
+                    morningFunc()
+                elif weekdayNightsFromDB == currentTime:
+                    nightTimeFunc()
         print(currentTime)
         time.sleep(1)
 
-        
 @app.route('/', methods = ["GET", "POST"])
 def index():
     checkValues()
@@ -212,6 +245,5 @@ def postDB():
     return render_template('template.html', data = data, alarm = alarm)
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False, port=5000)
-
+    app.run(debug=True, use_reloader=False, port=5001)
 # TO RUN ON HOST MACHINE host="0.0.0.0"

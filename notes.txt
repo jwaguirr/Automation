@@ -1,0 +1,13 @@
+This Adds 12 Hours to the time of run:
+    prioritizedFromDB = prioritizedFromDB.split()
+    for x in prioritizedFromDB:
+        firstTwoDigits = (int(x[0] + x[1]))
+        secondTwoDigits = x[3] + x[4]
+    firstTwoDigits = firstTwoDigits + 12
+    if firstTwoDigits >= 24:
+        firstTwoDigits = firstTwoDigits - 24
+        if firstTwoDigits in range(0,10):
+            firstTwoDigits = "0{}".format(firstTwoDigits)
+    turnOffTime = "{}:{}:00".format(firstTwoDigits, secondTwoDigits)
+    arr.pop(0)
+    arr.insert(0,turnOffTime)
