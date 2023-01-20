@@ -1,6 +1,8 @@
 from flask import Flask, render_template, redirect, request, url_for
 from datetime import datetime
+import datetime
 import time
+import serial
 import sqlite3 as sql
 import threading
 
@@ -8,7 +10,8 @@ import threading
 app = Flask(__name__)
 conn = sql.connect("database.db", check_same_thread=False)
 c = conn.cursor()
-arr = [""]
+prioritizedReset = ['']
+prioritizedShutOff = ['']
 # Creates the Table if it doesnt exist
 c.execute("""CREATE TABLE IF NOT EXISTS times(
     prioritized text,
@@ -23,8 +26,8 @@ c.execute("""CREATE TABLE IF NOT EXISTS times(
 # Formats the time to 24 Hours
 def formatTime(amPm, tableValName, userTimeInput):
     alarmTime = "{} {}".format(userTimeInput, amPm)
-    inTime = datetime.strptime(alarmTime, "%I:%M %p")
-    outTime = datetime.strftime(inTime, "%H:%M")
+    inTime = datetime.datetime.strptime(alarmTime, "%I:%M %p")
+    outTime = datetime.datetime.strftime(inTime, "%H:%M")
     outTimeSplit = outTime.split()
     checkTimeFormat(outTime,tableValName, outTimeSplit)
 
@@ -60,21 +63,16 @@ def checkTimeFormat(outTime, tableValName, outTimeSplit):
             print("Something went wrong, please make sure its in 24 hour format", e)
 
 # Compares value to database, if different runs moves to format checking
-def pullDifferences(prioritized, weekdays, weekends, weekdayNights, weekendNights, priorityAmPm):
-    if priorityAmPm == None:
-        pass
+def pullDifferences(prioritized, weekdays, weekends, weekdayNights, weekendNights):
     c.execute("SELECT * FROM times")
     times = c.fetchall()
     for items in times:
         if items[0] != prioritized:
-            if (prioritized == "None"):
+            if (prioritized == ''):
                 c.execute('UPDATE times SET prioritized = "None"')
                 conn.commit()
             else:
-                tableValName = "prioritized"
-                amPm = priorityAmPm
-                userTimeInput = prioritized
-                formatTime(amPm,tableValName,userTimeInput)
+                c.execute("UPDATE times SET prioritized = (?)", (prioritized,))
 
         if items[1] != weekdays:
             if weekdays == "":
@@ -124,16 +122,33 @@ def triggerPrioritizedFunc(prioritizedFromDB):
         if firstTwoDigits in range(0,10):
             firstTwoDigits = "0{}".format(firstTwoDigits)
     turnOffTime = "{}:{}:00".format(firstTwoDigits, secondTwoDigits)
-    arr.pop(0)
-    arr.insert(0,turnOffTime)
-    print(arr)
-    # Running The Actual Code-- Turning on LED Lights, Opening Blinds, Connecting to Speaker, and Possibly Moving Bed
+    prioritizedReset.pop(0)
+    prioritizedReset.insert(0,turnOffTime)
 
 def morningFunc():
+    ser.write(b"ON\n") # This turns LED Lights on
     print("Currently running the morning code :)")
 
 def nightTimeFunc():
-    print("Currently running the nighttime code :)")
+    ser.write(b"ON\n") # This turns LED Lights on
+    print("Currently running the nighttime code: ")
+    
+
+def onOff():
+    # Turn off the led lights
+    ser.write(b"ON\n") # This turns LED Lights on/off
+    print("Turn Off")
+
+
+def prioritizedFunc(prioritizedReset, prioritizedFromDB):
+    print("PRIORITIZED! Prioritized will reset at: ", prioritizedReset)
+    prioritizedDateTime = (datetime.datetime.strptime(prioritizedFromDB, "%H:%M:%S"))
+    addedMinutes = (prioritizedDateTime + datetime.timedelta(minutes=5)).strftime("%H:%M:%S")
+    prioritizedShutOff.pop(0)
+    prioritizedShutOff.insert(0, addedMinutes)
+    print(prioritizedShutOff)
+    onOff()
+
 
 # Setting the alarm when pulling from the DB
 def setAlarm():
@@ -151,38 +166,68 @@ def setAlarm():
         for items in times:
             pass
         if items[0] != "None":
-             prioritizedFromDB = "{}{}".format(items[0],":00")
+            prioritizedFromDB = "{}{}".format(items[0],":00")
         else:
             prioritizedFromDB = items[0]
         weekdaysFromDB = "{}{}".format(items [1],":00"); weekendsFromDB = "{}{}".format(items[2],":00"); weekdayNightsFromDB = "{}{}".format(items[3],":00"); weekendNightsFromDB = "{}{}".format(items[4],":00"); toggleAlarmFromDB = items[5]
         if toggleAlarmFromDB == 0:
             alarms = 0
-        dayOfWeek = int((datetime.now().date()).strftime('%w'))
+        dayOfWeek = int((datetime.datetime.now().date()).strftime('%w'))
         itsAWeekend = dayOfWeek == 0 or dayOfWeek == 6
-        now = datetime.now()
+        now = datetime.datetime.now()
         currentTime = now.strftime("%H:%M:%S")
         
         if prioritizedFromDB != "None": # Prioritizing the Prioritized Time
+            # If current time is equal to the inputed time, run code
             if prioritizedFromDB == currentTime:
                 triggerPrioritizedFunc(prioritizedFromDB)
-                print(prioritizedFromDB)
-            elif prioritizedFromDB == arr[0]:
-                arr.insert(0,"")
+                prioritizedFunc(prioritizedReset,prioritizedFromDB)
+
+            elif currentTime == prioritizedShutOff[0]:
+                onOff() # Turns off after 5 minutes
+            
+            elif currentTime == prioritizedReset[0]:
+                prioritizedReset.pop(0)
+                prioritizedReset.insert(0,"")
                 c.execute('UPDATE times SET prioritized = "None"')
                 conn.commit()
-                pass
+                printDB(dbMessage="Updating Priority to None")
+    
         else:
             if itsAWeekend:
+                weekendNightsDateTime = (datetime.datetime.strptime(weekendNightsFromDB, "%H:%M:%S"))
+                weekendNightsTurnOn = (weekendNightsDateTime - datetime.timedelta(hours=3)).strftime("%H:%M:%S") # Subtracting 3 hours to call the start function
+                weekendDateTime = (datetime.datetime.strptime(weekendsFromDB, "%H:%M:%S"))
+                weekendTurnOff = (weekendDateTime + datetime.timedelta(minutes=30)).strftime("%H:%M:%S") # Adding 5 minutes to the time to turn off the led lights and speaker TODO: add a shutoff time of 15 seconds for the speaker
+                if weekendNightsTurnOn == currentTime:
+                    nightTimeFunc()
+                elif weekendNightsFromDB == currentTime:
+                    onOff()
+                
                 if weekendsFromDB == currentTime:
                     morningFunc()
-                elif weekendNightsFromDB == currentTime:
-                    nightTimeFunc()
+                if weekendTurnOff == currentTime:
+                    onOff()
+
 
             else: # Not a weekend
-                if weekdaysFromDB == currentTime:
-                    morningFunc()
+                # Initializing the db input into a datetime object
+                weekdayNightsDateTime = (datetime.datetime.strptime(weekdayNightsFromDB, "%H:%M:%S"))
+                weekdayNightsTurnOn = (weekdayNightsDateTime - datetime.timedelta(hours=3)).strftime("%H:%M:%S") # Subtracting 3 hours to call the start function
+                print("Weekdaynights turn on: ", weekdayNightsTurnOn)
+                weekdayDateTime = (datetime.datetime.strptime(weekdaysFromDB, "%H:%M:%S"))
+                weekdayTurnOff = (weekdayDateTime + datetime.timedelta(minutes=30)).strftime("%H:%M:%S") # Adding 5 minutes to the time to turn off the led lights and speaker TODO: add a shutoff time of 15 seconds for the speaker
+                print("Weekday mornings shut off", weekdayTurnOff)
+
+                if weekdayNightsTurnOn == currentTime:
+                    nightTimeFunc() # Turns on the lights 3 hours before
                 elif weekdayNightsFromDB == currentTime:
-                    nightTimeFunc()
+                    onOff() # Turns off the lights at the time the user specifies
+
+                if weekdaysFromDB == currentTime:
+                    morningFunc() 
+                elif weekdayTurnOff == currentTime:
+                    onOff() # 30 minutes later turn off the lights 
         print(currentTime)
         time.sleep(1)
 
@@ -206,15 +251,11 @@ def index():
         except:
             try:
                 prioritized = request.form['prioritized']
-                try:
-                    priorityAmPm = request.form['prioritizedTime']
-                except:
-                    priorityAmPm = None
                 weekdays = request.form['weekdays']
                 weekends = request.form['weekends']
                 weekendNights = request.form['weekendNights']
                 weekdayNights = request.form['weekdayNights']
-                pullDifferences(prioritized,weekdays,weekends, weekdayNights, weekendNights, priorityAmPm)
+                pullDifferences(prioritized,weekdays,weekends, weekdayNights, weekendNights)
                 conn.commit()
             except TypeError as e:
                 print("Exception Thrown!", e)
@@ -245,5 +286,7 @@ def postDB():
     return render_template('template.html', data = data, alarm = alarm)
 
 if __name__ == "__main__":
+    ser = serial.Serial("/dev/ttyUSB0", 9600, tiemout = 1)
+    ser.flush()
     app.run(debug=True, use_reloader=False, port=5001)
 # TO RUN ON HOST MACHINE host="0.0.0.0"

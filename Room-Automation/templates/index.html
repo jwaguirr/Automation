@@ -1,197 +1,57 @@
-<html>
+<html lang = "en">
     {% for item in data %}
     <head>
         <title>JWS Room</title>
-        <style>
-            body{
-                background-color: #5f787b;
-            }
-            a{
-                text-decoration: none;
-                color: black;
-                border: 2px solid black;
-                border-radius: 5px;
-                padding:.25rem;
-            }
-            a:hover{
-                opacity: 50%;
-            }
-            .nav{
-                margin:auto;
-                width:100%;
-                font-size:3rem;
-                margin-top: 10%;
-                text-align: center;
-            }
-            
-            .form h5{
-                padding: 0;
-                margin: 0;
-                font-size:3rem;
-            }
-            .form input{
-                border-radius: 5px;
-                display: inline-flex;
-                width:100%;
-                font-size:3rem;
-                padding:10px;
-                background-color: transparent;
-                box-shadow: none;
-                border-color: transparent;
-            }
-            .grid{
-                margin-top: -30%;
-                display:grid;
-                grid-template-columns: auto auto;
-            }
-            .grid-item{
-                width: 90%;
-                height:500px;
-                font-size:3rem;
-                position: relative;
-                align-items: center;
-                justify-content: center;
-                padding:2%;
-                text-align: center;
-            }
-            .grid-item p{
-                color:black;
-                text-align: center;
-                font-size:2rem;
-            }
-            .grid-item input{
-                margin-top: 2%;
-                border: 2px solid black;
-            }
-            .form span{
-                border-radius: 5px;
-                width: 25%;
-                height:500px;
-                font-size:3rem;
-                position: relative;
-
-            }
-            .form span input::placeholder{
-                color:darkgray;
-                opacity:50%;
-            }
-            .selectZone{
-                padding-top:10px;
-                width: 100%;
-                font-size:3rem;
-                display: flex;
-            }
-            .priority{
-                margin: auto;
-                width:25%;
-                text-align: center;
-                padding-top:10%;
-            }
-            .prior{
-                border: 2px solid black;
-            }
-            .selectZone span {
-                padding-top: 10%;
-                padding-right:50%;
-            }
-            .selectZone span input{
-                width: 100%;
-                height: 10%;
-            }
-            .button:hover{
-                opacity: 50%;
-            }
-            .buttons{
-                display: block;
-                position: relative;
-                width: 100%;
-                justify-content: center;
-                margin:0;
-                margin-top: -20%;
-                text-align: center;
-                padding: 10px;
-            }
-
-            .buttons span{
-                order:1;
-                position: relative;
-                display: flex;
-                justify-content: center;
-                width:50%;
-                text-align: center;
-                height:5%;
-                margin: auto;
-                border: 2px solid black;
-                margin-bottom: 5%;
-            }
-            .buttons label {
-                order:2;
-                width:25%;
-                justify-content: center;
-                padding-bottom: 10px;
-                text-align: center;
-                margin-bottom: 10px;
-            }
-
-            
-        </style>
-        <script>
-        </script>
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <form action = "{{ url_for('index') }}" method = "POST" name = "timeForm" onchange="showDropInfo()">
-            <div class = "nav">
+        <div class = "container" align = "center">
                 <h1>Alarm Times</h1>
                 <h3>Please enter in 12 Hour format</h3>
                 <a href = "/database" type = "button">Database</a>
             </div>
-            <div class = "form">
-                <div class = "priority">
-                    <h5>Prioritized</h5><br>
-                    <span class = "prior"><input type="text" name = "prioritized" list="times" value = "None" /></span>
-                    <datalist id="times" value = "None">
-                        <option>None</option>
-                    </datalist> 
-                    <div class = "selectZone">
-                        <span>
-                            <input type = "radio" id="AM" value = "AM" name = "prioritizedTime" />
-                            <label for="AM">AM</label>
-                        </span>
-                        <span>
-                            <input type = "radio" id = "PM" value = "PM" name = "prioritizedTime"/>
-                            <label for = "PM">PM</label>
-                        </span>
-                    </div>
-                </div>
-                <div class = "grid">
-                    <div class = "grid-item">
-                        <h5>Weekday Mornings (Turn On)</h5>
-                        <span><input type = "text" name = "weekdays" placeholder={{item[1]}} /></span><br>
-                        <p>Powers off after an hour</p>
-                    </div>
-                    <div class = "grid-item">
-                        <h5>Weekday Nights (Turn Off)</h5>
-                        <span><input type = "text" name = "weekdayNights" placeholder={{item[3]}} /></span><br>
-                        <p>Powers on two hours before</p>
-                    </div>
-                    <div class="grid-item">
-                        <h5>Weekend Mornings (Turn On)</h5>
-                        <span><input type = "text" name = "weekends" placeholder = {{item[2]}} /></span><br>
-                        <p>Powers off after an hour</p>
-                    </div>
-                    <div class="grid-item">
-                        <h5>Weekend Nights (Turn Off)</h5>
-                        <span><input type = "text" name = "weekendNights" placeholder = {{item[4]}} /></span><br>
-                        <p>Powers on two hours before</p>
-                    </div>
-                </div>
-                <div class="buttons">
-                    <label>Update Alarms</label>
-                    <span class = "button"><input type = "submit" value = "Update Alarms"/></span>
-                    <label>{{alarm}}</label>
-                    <span class = "button"><input type = "submit" value = "Toggle" name = "toggleAlarms"/></span>
-                </div>
+            
+            <main class = "container">
+                <section id = "form">
+                    <form action = "{{ url_for('index') }}" method = "POST" name = "timeForm" onchange="showDropInfo()">
+                    <label for="time">
+                        <h5>Prioritized Time</h5>
+                        <input type="time" id="prioritized" name="prioritized" value = "None"">
+                        <p  align = "center" >Will prioritize over other alarms</p>
+                    </label>
+                        <div class = "grid">
+                            <div class = "grid-item">
+                                <h5>Weekday Mornings (Turn On)</h5>
+                                <span><input type = "text" name = "weekdays" placeholder={{item[1]}} /></span><br>
+                                <p  align = "center">Powers off after an hour</p>
+                            </div>
+                            <div class = "grid-item">
+                                <h5>Weekday Nights (Turn Off)</h5>
+                                <span><input type = "text" name = "weekdayNights" placeholder={{item[3]}} /></span><br>
+                                <p  align = "center">Powers on two hours before</p>
+                            </div>
+                            <div class="grid-item">
+                                <h5>Weekend Mornings (Turn On)</h5>
+                                <span><input type = "text" name = "weekends" placeholder = {{item[2]}} /></span><br>
+                                <p  align = "center">Powers off after an hour</p>
+                            </div>
+                            <div class="grid-item">
+                                <h5>Weekend Nights (Turn Off)</h5>
+                                <span><input type = "text" name = "weekendNights" placeholder = {{item[4]}} /></span><br>
+                                <p  align = "center">Powers on two hours before</p>
+                            </div>
+                        </div>
+                        <div class="buttons">
+                            <label>Update Alarms</label>
+                            <span class = "button"><input type = "submit" value = "Update Alarms"/></span>
+                            <label>{{alarm}}</label>
+                            <span class = "button"><input type = "submit" value = "Toggle" name = "toggleAlarms"/></span>
+                        </div>
+                </section>
                 
+            </main> 
             </div>
         </form>
     </body>
